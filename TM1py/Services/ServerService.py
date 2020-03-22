@@ -6,6 +6,7 @@ import json
 import pytz
 
 from TM1py.Services.ObjectService import ObjectService
+from TM1py.Utils import escape_arguments
 
 
 def odata_track_changes_header(func):
@@ -76,6 +77,7 @@ class ServerService(ObjectService):
         response = self._rest.GET(request, '')
         return response.json()['value']
 
+    @escape_arguments("cube", "user")
     def get_transaction_log_entries(self, reverse=True, user=None, cube=None, since=None, top=None):
         """
         

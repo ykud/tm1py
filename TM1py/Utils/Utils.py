@@ -1,4 +1,6 @@
 import collections
+import functools
+import inspect
 import json
 import re
 import sys
@@ -32,6 +34,51 @@ def get_all_servers_from_adminhost(adminhost='localhost'):
         server = Server(server_as_dict)
         servers.append(server)
     return servers
+
+
+def escape_string_arguments(func):
+    """ Higher Order function to escape ' with '' in string arguments
+
+    :return:
+    """
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # escape
+        args = tuple(arg.replace("'", "''") if isinstance(arg, str) else arg
+                     for arg
+                     in args)
+        kwargs = {key: value.replace("'", "''") if isinstance(value, str) else value
+                  for key, value
+                  in kwargs.items()}
+
+        # call actual method
+        response = func(self, *args, **kwargs)
+        return response
+
+    return wrapper
+
+
+def escape_arguments(*object_names):
+    def decorator(func):
+
+        @functools.wraps(func)
+        def decorated_func(*args, **kwargs):
+            arg_names = inspect.getfullargspec(func).args
+
+            args = tuple(arg.replace("'", "''") if arg_name in object_names else arg
+                         for arg_name, arg
+                         in zip(arg_names, args))
+
+            kwargs = {key: value.replace("'", "''") if key in object_names else value
+                      for key, value
+                      in kwargs.items()}
+
+            result = func(*args, **kwargs)
+            return result
+
+        return decorated_func
+    return decorator
 
 
 def odata_escape_single_quotes_in_object_names(url):

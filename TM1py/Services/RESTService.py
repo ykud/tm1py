@@ -31,12 +31,11 @@ def httpmethod(func):
     """
 
     @functools.wraps(func)
-    def wrapper(self, request, data='', odata_escape_single_quotes_in_object_names=True, encoding='utf-8', **kwargs):
+    def wrapper(self, request, data='', encoding='utf-8', **kwargs):
         # request encoding
         request, data = self._url_and_body(
             request=request,
             data=data,
-            odata_escape_single_quotes_in_object_names=odata_escape_single_quotes_in_object_names,
             encoding=encoding)
         # Do Request
         response = func(self, request, data)
@@ -260,13 +259,11 @@ class RESTService:
             # After we have session cookie, drop the Authorization Header
             self.remove_http_header('Authorization')
 
-    def _url_and_body(self, request, data, odata_escape_single_quotes_in_object_names=True, encoding='utf-8'):
+    def _url_and_body(self, request, data, encoding='utf-8'):
         """ create proper url and payload
         """
         url = self._base_url + request
         url = url.replace(' ', '%20').replace('#', '%23')
-        if odata_escape_single_quotes_in_object_names:
-            url = Utils.odata_escape_single_quotes_in_object_names(url)
         if isinstance(data, str):
             data = data.encode(encoding)
         return url, data

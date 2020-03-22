@@ -4,7 +4,7 @@ from TM1py.Exceptions import TM1pyException
 
 
 class ObjectService:
-    """ Parentclass for all Object Services
+    """ Parent class for all Object Services
     
     """
 
@@ -30,7 +30,7 @@ class ObjectService:
         return response.json()["value"][0]["Name"]
 
     def _exists(self, request):
-        """ Check if ressource exists in the TM1 Server
+        """ Check if resource exists in the TM1 Server
         
         :param request: 
         :return: 
