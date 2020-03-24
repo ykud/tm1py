@@ -45,7 +45,7 @@ class SubsetService(ObjectService):
         request = '/api/v1/Dimensions(\'{}\')/Hierarchies(\'{}\')/{}(\'{}\')?$expand=' \
                   'Hierarchy($select=Dimension,Name),' \
                   'Elements($select=Name)&$select=*,Alias'.format(dimension_name, hierarchy_name, subsets, subset_name)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         return Subset.from_dict(response.json())
 
     def get_all_names(self, dimension_name, hierarchy_name=None, private=False):
@@ -61,7 +61,7 @@ class SubsetService(ObjectService):
         subsets = "PrivateSubsets" if private else "Subsets"
         request = '/api/v1/Dimensions(\'{}\')/Hierarchies(\'{}\')/{}?$select=Name' \
             .format(dimension_name, hierarchy_name, subsets)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         subsets = response.json()['value']
         return [subset['Name'] for subset in subsets]
 
@@ -81,7 +81,7 @@ class SubsetService(ObjectService):
         subsets = "PrivateSubsets" if private else "Subsets"
         request = "/api/v1/Dimensions('{}')/Hierarchies('{}')/{}('{}')".format(
             subset.dimension_name, subset.hierarchy_name, subsets, subset.name)
-        return self._rest.PATCH(request=request, data=subset.body)
+        return self._rest.PATCH(url=request, data=subset.body)
 
     def delete(self, subset_name, dimension_name, hierarchy_name=None, private=False):
         """ Delete an existing subset on the TM1 Server
@@ -96,7 +96,7 @@ class SubsetService(ObjectService):
         subsets = "PrivateSubsets" if private else "Subsets"
         request = '/api/v1/Dimensions(\'{}\')/Hierarchies(\'{}\')/{}(\'{}\')' \
             .format(dimension_name, hierarchy_name, subsets, subset_name)
-        response = self._rest.DELETE(request=request, data='')
+        response = self._rest.DELETE(url=request, data='')
         return response
 
     def exists(self, subset_name, dimension_name, hierarchy_name=None, private=False):
@@ -118,4 +118,4 @@ class SubsetService(ObjectService):
         subsets = "PrivateSubsets" if private else "Subsets"
         request = "/api/v1/Dimensions('{}')/Hierarchies('{}')/{}('{}')/Elements/$ref".format(
             dimension_name, hierarchy_name, subsets, subset_name)
-        return self._rest.DELETE(request=request)
+        return self._rest.DELETE(url=request)

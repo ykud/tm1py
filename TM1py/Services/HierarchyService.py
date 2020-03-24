@@ -155,7 +155,7 @@ class HierarchyService(ObjectService):
         request = "/api/v1/Dimensions('{dimension}')/Hierarchies('{hierarchy}')/DefaultMember/Name/$value".format(
             dimension=dimension_name,
             hierarchy=hierarchy_name if hierarchy_name else dimension_name)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         return response.text
 
     def update_default_member(self, dimension_name, hierarchy_name=None, member_name=""):
@@ -189,7 +189,7 @@ class HierarchyService(ObjectService):
         body = {
             "Edges": []
         }
-        return self._rest.PATCH(request=request, data=json.dumps(body))
+        return self._rest.PATCH(url=request, data=json.dumps(body))
 
     def is_balanced(self, dimension_name, hierarchy_name):
         """ Check if hierarchy is balanced

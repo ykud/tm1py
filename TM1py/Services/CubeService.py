@@ -6,6 +6,7 @@ from TM1py.Objects.Cube import Cube
 from TM1py.Services.CellService import CellService
 from TM1py.Services.ObjectService import ObjectService
 from TM1py.Services.ViewService import ViewService
+from TM1py.Utils import format_url
 
 
 class CubeService(ObjectService):
@@ -131,15 +132,15 @@ class CubeService(ObjectService):
         list_cubes = list(entry['Name'] for entry in response.json()['value'])
         return list_cubes
 
-    def get_dimension_names(self, cube_name, skip_sandbox_dimension=True):
+    def get_dimension_names(self, cube_name, skip_sandbox_dimension=True, **kwargs):
         """ get name of the dimensions of a cube in their correct order
 
         :param cube_name:
         :param skip_sandbox_dimension:
         :return:  List : [dim1, dim2, dim3, etc.]
         """
-        request = "/api/v1/Cubes('{}')/Dimensions?$select=Name".format(cube_name)
-        response = self._rest.GET(request, '')
+        request = format_url("/api/v1/Cubes('{}')/Dimensions?$select=Name", cube_name)
+        response = self._rest.GET(request, **kwargs)
         dimension_names = [element['Name'] for element in response.json()['value']]
         if skip_sandbox_dimension and dimension_names[0] == CellService.SANDBOX_DIMENSION:
             return dimension_names[1:]
@@ -167,7 +168,7 @@ class CubeService(ObjectService):
         payload['Dimensions@odata.bind'] = ["Dimensions('{}')".format(dimension)
                                             for dimension
                                             in dimension_names]
-        return self._rest.POST(request=url, data=json.dumps(payload))
+        return self._rest.POST(url=url, data=json.dumps(payload))
 
     def load(self, cube_name):
         """ Load the cube into memory on the server
@@ -176,7 +177,7 @@ class CubeService(ObjectService):
         :return:
         """
         url = "/api/v1/Cubes('{}')/tm1.Load".format(cube_name)
-        return self._rest.POST(request=url)
+        return self._rest.POST(url=url)
 
     def unload(self, cube_name):
         """ Unload the cube from memory
@@ -185,7 +186,7 @@ class CubeService(ObjectService):
         :return:
         """
         url = "/api/v1/Cubes('{}')/tm1.Unload".format(cube_name)
-        return self._rest.POST(request=url)
+        return self._rest.POST(url=url)
 
     def get_random_intersection(self, cube_name, unique_names=False):
         """ Get a random Intersection in a cube

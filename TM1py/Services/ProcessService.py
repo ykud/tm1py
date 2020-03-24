@@ -4,14 +4,15 @@ import json
 import uuid
 
 from TM1py.Exceptions import TM1pyException
-from TM1py.Objects import Process
-from TM1py.Services import ObjectService
+from TM1py.Objects.Process import Process
+from TM1py.Services.ObjectService import ObjectService
 
 
 class ProcessService(ObjectService):
     """ Service to handle Object Updates for TI Processes
     
     """
+
     def __init__(self, rest):
         super().__init__(rest)
 
@@ -162,8 +163,9 @@ class ProcessService(ObjectService):
                     parameters["Parameters"].append({"Name": parameter_name, "Value": parameter_value})
             else:
                 parameters = {}
-        return self._rest.POST(request=request, data=json.dumps(parameters, ensure_ascii=False))
+        return self._rest.POST(url=request, data=json.dumps(parameters, ensure_ascii=False))
 
+    # @version(min=11.4)
     def execute_with_return(self, process_name, **kwargs):
         """ Ask TM1 Server to execute a process.
         pass process parameters as keyword arguments to this function. E.g:
@@ -183,12 +185,13 @@ class ProcessService(ObjectService):
             for parameter_name, parameter_value in kwargs.items():
                 parameters["Parameters"].append({"Name": parameter_name, "Value": parameter_value})
         response = self._rest.POST(
-            request=request,
+            url=request,
             data=json.dumps(parameters, ensure_ascii=False))
         execution_summary = response.json()
         success = execution_summary["ProcessExecuteStatusCode"] == "CompletedSuccessfully"
         status = execution_summary["ProcessExecuteStatusCode"]
-        error_log_file = None if execution_summary["ErrorLogFile"] is None else execution_summary["ErrorLogFile"]["Filename"]
+        error_log_file = None if execution_summary["ErrorLogFile"] is None else execution_summary["ErrorLogFile"][
+            "Filename"]
         return success, status, error_log_file
 
     def execute_ti_code(self, lines_prolog, lines_epilog=None):
@@ -216,7 +219,7 @@ class ProcessService(ObjectService):
         :return: String, content of the file
         """
         request = "/api/v1/ErrorLogFiles('{file_name}')/Content".format(file_name=file_name)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         return response.text
 
     def get_processerrorlogs(self, process_name):
@@ -226,7 +229,7 @@ class ProcessService(ObjectService):
         :return: list - Collection of ProcessErrorLogs
         """
         request = "/api/v1/Processes('{}')/ErrorLogs".format(process_name)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         return response.json()['value']
 
     def get_last_message_from_processerrorlog(self, process_name):
@@ -241,5 +244,5 @@ class ProcessService(ObjectService):
             timestamp = logs_as_list[-1]['Timestamp']
             request = "/api/v1/Processes('{}')/ErrorLogs('{}')/Content".format(process_name, timestamp)
             # response is plain text - due to entity type Edm.Stream
-            response = self._rest.GET(request=request)
+            response = self._rest.GET(url=request)
             return response

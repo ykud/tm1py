@@ -6,7 +6,7 @@ import json
 import pytz
 
 from TM1py.Services.ObjectService import ObjectService
-from TM1py.Utils import escape_arguments
+from TM1py.Utils import format_url
 
 
 def odata_track_changes_header(func):
@@ -44,13 +44,13 @@ class ServerService(ObjectService):
         request = "/api/v1/TransactionLogEntries"
         if filter:
             request += "?$filter={}".format(filter)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         # Read the next delta-request-url from the response
         self.tlog_last_delta_request = response.text[response.text.rfind("TransactionLogEntries/!delta('"):-2]
 
     @odata_track_changes_header
     def execute_transaction_log_delta_request(self):
-        response = self._rest.GET(request="/api/v1/" + self.tlog_last_delta_request)
+        response = self._rest.GET(url="/api/v1/" + self.tlog_last_delta_request)
         self.tlog_last_delta_request = response.text[response.text.rfind("TransactionLogEntries/!delta('"):-2]
         return response.json()['value']
 
@@ -59,13 +59,13 @@ class ServerService(ObjectService):
         request = "/api/v1/MessageLogEntries"
         if filter:
             request += "?$filter={}".format(filter)
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         # Read the next delta-request-url from the response
         self.mlog_last_delta_request = response.text[response.text.rfind("MessageLogEntries/!delta('"):-2]
 
     @odata_track_changes_header
     def execute_message_log_delta_request(self):
-        response = self._rest.GET(request="/api/v1/" + self.mlog_last_delta_request)
+        response = self._rest.GET(url="/api/v1/" + self.mlog_last_delta_request)
         self.mlog_last_delta_request = response.text[response.text.rfind("MessageLogEntries/!delta('"):-2]
         return response.json()['value']
 
@@ -77,7 +77,6 @@ class ServerService(ObjectService):
         response = self._rest.GET(request, '')
         return response.json()['value']
 
-    @escape_arguments("cube", "user")
     def get_transaction_log_entries(self, reverse=True, user=None, cube=None, since=None, top=None):
         """
         
@@ -94,16 +93,16 @@ class ServerService(ObjectService):
         if user or cube or since:
             log_filters = []
             if user:
-                log_filters.append("User eq '{}'".format(user))
+                log_filters.append(format_url("User eq '{}'", user))
             if cube:
-                log_filters.append("Cube eq '{}'".format(cube))
+                log_filters.append(format_url("Cube eq '{}'", cube))
             if since:
                 # If since doesn't have tz information, UTC is assumed
                 if not since.tzinfo:
                     since = pytz.utc.localize(since)
                 # TM1 REST API expects %Y-%m-%dT%H:%M:%SZ Format with UTC time !
                 since_utc = since.astimezone(pytz.utc)
-                log_filters.append("TimeStamp ge {}".format(since_utc.strftime("%Y-%m-%dT%H:%M:%SZ")))
+                log_filters.append(format_url("TimeStamp ge {}", since_utc.strftime("%Y-%m-%dT%H:%M:%SZ")))
             request += "&$filter={}".format(" and ".join(log_filters))
         # top limit
         if top:
@@ -119,7 +118,7 @@ class ServerService(ObjectService):
         """
         request = "/api/v1/MessageLog()?$orderby='TimeStamp'&$filter=Logger eq 'TM1.Process' " \
                   "and contains( Message, '" + process_name + "')"
-        response = self._rest.GET(request=request)
+        response = self._rest.GET(url=request)
         response_as_list = response.json()['value']
         if len(response_as_list) > 0:
             message_log_entry = response_as_list[0]

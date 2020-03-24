@@ -4,7 +4,7 @@ import json
 
 from TM1py.Objects.User import User
 from TM1py.Services.ObjectService import ObjectService
-from TM1py.Utils.Utils import odata_escape_single_quotes_in_object_names
+from TM1py.Utils.Utils import format_url
 
 
 class SecurityService(ObjectService):
@@ -27,8 +27,8 @@ class SecurityService(ObjectService):
         :param user: instance of TM1py.User
         :return: response
         """
-        request = '/api/v1/Users'
-        return self._rest.POST(request, user.body)
+        url = '/api/v1/Users'
+        return self._rest.POST(url, user.body)
 
     def create_group(self, group_name):
         """ Create a Security group in the TM1 Server
@@ -36,8 +36,8 @@ class SecurityService(ObjectService):
         :param group_name:
         :return:
         """
-        request = '/api/v1/Groups'
-        return self._rest.POST(request, json.dumps({"Name": group_name}))
+        url = '/api/v1/Groups'
+        return self._rest.POST(url, json.dumps({"Name": group_name}))
 
     def get_user(self, user_name):
         """ Get user from TM1 Server
@@ -46,8 +46,8 @@ class SecurityService(ObjectService):
         :return: instance of TM1py.User
         """
         user_name = self.determine_actual_user_name(user_name)
-        request = "/api/v1/Users('{}')?$expand=Groups".format(user_name)
-        response = self._rest.GET(request)
+        url = format_url("/api/v1/Users('{}')?$expand=Groups", user_name)
+        response = self._rest.GET(url)
         return User.from_dict(response.json())
 
     def get_current_user(self):
@@ -55,8 +55,8 @@ class SecurityService(ObjectService):
 
         :return: instance of TM1py.User
         """
-        request = "/api/v1/ActiveUser?$expand=Groups"
-        response = self._rest.GET(request)
+        url = "/api/v1/ActiveUser?$expand=Groups"
+        response = self._rest.GET(url)
         return User.from_dict(response.json())
 
     def update_user(self, user):
@@ -69,8 +69,8 @@ class SecurityService(ObjectService):
         for current_group in self.get_groups(user.name):
             if current_group not in user.groups:
                 self.remove_user_from_group(current_group, user.name)
-        request = "/api/v1/Users('{}')".format(user.name)
-        return self._rest.PATCH(request, user.body)
+        url = format_url("/api/v1/Users('{}')", user.name)
+        return self._rest.PATCH(url, user.body)
 
     def delete_user(self, user_name):
         """ Delete user on TM1 Server
@@ -79,8 +79,8 @@ class SecurityService(ObjectService):
         :return: response
         """
         user_name = self.determine_actual_user_name(user_name)
-        request = "/api/v1/Users('{}')".format(user_name)
-        return self._rest.DELETE(request)
+        url = format_url("/api/v1/Users('{}')", user_name)
+        return self._rest.DELETE(url)
 
     def delete_group(self, group_name):
         """ Delete a group in the TM1 Server
@@ -89,16 +89,16 @@ class SecurityService(ObjectService):
         :return:
         """
         group_name = self.determine_actual_group_name(group_name)
-        request = "/api/v1/Groups('{}')".format(group_name)
-        return self._rest.DELETE(request)
+        url = format_url("/api/v1/Groups('{}')", group_name)
+        return self._rest.DELETE(url)
 
     def get_all_users(self):
         """ Get all users from TM1 Server
 
         :return: List of TM1py.User instances
         """
-        request = '/api/v1/Users?$expand=Groups'
-        response = self._rest.GET(request)
+        url = '/api/v1/Users?$expand=Groups'
+        response = self._rest.GET(url)
         users = [User.from_dict(user) for user in response.json()['value']]
         return users
 
@@ -107,8 +107,8 @@ class SecurityService(ObjectService):
 
         :return: List of TM1py.User instances
         """
-        request = '/api/v1/Users?select=Name'
-        response = self._rest.GET(request)
+        url = '/api/v1/Users?select=Name'
+        response = self._rest.GET(url)
         users = [user["Name"] for user in response.json()['value']]
         return users
 
@@ -118,8 +118,8 @@ class SecurityService(ObjectService):
         :param group_name:
         :return: List of TM1py.User instances
         """
-        request = "/api/v1/Groups('{}')?$expand=Users($expand=Groups)".format(group_name)
-        response = self._rest.GET(request)
+        url = format_url("/api/v1/Groups('{}')?$expand=Users($expand=Groups)", group_name)
+        response = self._rest.GET(url)
         users = [User.from_dict(user) for user in response.json()['Users']]
         return users
 
@@ -129,8 +129,8 @@ class SecurityService(ObjectService):
         :param group_name:
         :return: List of strings
         """
-        request = "/api/v1/Groups('{}')?$expand=Users($expand=Groups)".format(group_name)
-        response = self._rest.GET(request)
+        url = format_url("/api/v1/Groups('{}')?$expand=Users($expand=Groups)", group_name)
+        response = self._rest.GET(url)
         users = [user["Name"] for user in response.json()['Users']]
         return users
 
@@ -141,8 +141,8 @@ class SecurityService(ObjectService):
         :return: List of strings
         """
         user_name = self.determine_actual_user_name(user_name)
-        request = '/api/v1/Users(\'{}\')/Groups'.format(user_name)
-        response = self._rest.GET(request)
+        url = format_url("/api/v1/Users('{}')/Groups", user_name)
+        response = self._rest.GET(url)
         return [group['Name'] for group in response.json()['value']]
 
     def add_user_to_groups(self, user_name, groups):
@@ -153,16 +153,15 @@ class SecurityService(ObjectService):
         :return: response
         """
         user_name = self.determine_actual_user_name(user_name)
-        request = "/api/v1/Users('{}')".format(user_name)
+        url = format_url("/api/v1/Users('{}')", user_name)
         body = {
             "Name": user_name,
             "Groups@odata.bind": [
-                odata_escape_single_quotes_in_object_names("Groups('{}')".format(
-                    self.determine_actual_group_name(group)))
+                format_url("Groups('{}')", self.determine_actual_group_name(group))
                 for group
                 in groups]
         }
-        return self._rest.PATCH(request, json.dumps(body))
+        return self._rest.PATCH(url, json.dumps(body))
 
     def remove_user_from_group(self, group_name, user_name):
         """ Remove user from group in TM1 Server
@@ -173,16 +172,16 @@ class SecurityService(ObjectService):
         """
         user_name = self.determine_actual_user_name(user_name)
         group_name = self.determine_actual_group_name(group_name)
-        request = "/api/v1/Users('{}')/Groups?$id=Groups('{}')".format(user_name, group_name)
-        return self._rest.DELETE(request)
+        url = format_url("/api/v1/Users('{}')/Groups?$id=Groups('{}')", user_name, group_name)
+        return self._rest.DELETE(url)
 
     def get_all_groups(self):
         """ Get all groups from TM1 Server
 
         :return: List of strings
         """
-        request = '/api/v1/Groups?$select=Name'
-        response = self._rest.GET(request)
+        url = '/api/v1/Groups?$select=Name'
+        response = self._rest.GET(url)
         groups = [entry['Name'] for entry in response.json()['value']]
         return groups
 

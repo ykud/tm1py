@@ -3,7 +3,7 @@ import json
 
 from TM1py.Objects import ElementAttribute, Element
 from TM1py.Services.ObjectService import ObjectService
-from TM1py.Utils import CaseAndSpaceInsensitiveDict
+from TM1py.Utils import CaseAndSpaceInsensitiveDict, format_url
 from TM1py.Utils import build_element_unique_names
 
 
@@ -224,14 +224,16 @@ class ElementService(ObjectService):
         """
         attribute_name = attribute_name.replace(" ", "")
         if isinstance(attribute_value, str):
-            request = "/api/v1/Dimensions('{}')/Hierarchies('{}')" \
-                      "?$expand=Elements($filter = Attributes/{} eq '{}';$select=Name)" \
-                .format(dimension_name, hierarchy_name, attribute_name, attribute_value)
+            url = format_url("/api/v1/Dimensions('{}')/Hierarchies('{}')?$expand=Elements($filter = "
+                             "Attributes/{} eq '{}';$select=Name)",
+                             dimension_name, hierarchy_name, attribute_name, attribute_value)
+
         else:
-            request = "/api/v1/Dimensions('{}')/Hierarchies('{}')" \
-                      "?$expand=Elements($filter = Attributes/{} eq {};$select=Name)" \
-                .format(dimension_name, hierarchy_name, attribute_name, attribute_value)
-        response = self._rest.GET(request, odata_escape_single_quotes_in_object_names=False)
+            url = format_url("/api/v1/Dimensions('{}')/Hierarchies('{}')?$expand=Elements($filter = "
+                             "Attributes/{} eq {};$select=Name)",
+                             dimension_name, hierarchy_name, attribute_name, attribute_value)
+
+        response = self._rest.GET(url,)
         return [elem['Name'] for elem in response.json()['Elements']]
 
     def create_element_attribute(self, dimension_name, hierarchy_name, element_attribute):
